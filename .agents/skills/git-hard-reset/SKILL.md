@@ -91,6 +91,20 @@ The script runs `git status` at the end to confirm a clean tree.
 - **No `origin` remote**: fall back to `git reset --hard HEAD` and skip the fetch. Tell the user the remote sync step was skipped.
 - **Dirty index from a failed merge/rebase**: `git reset --hard` aborts the in-progress operation. Confirm the user actually wants to abandon the merge/rebase, not resolve it.
 
+## Scripts in this skill
+
+| Script | Caller | Confirmation | Target |
+| ------ | ------ | ------------ | ------ |
+| `scripts/preview.sh [standard\|full]` | agent or user | none (read-only) | n/a |
+| `scripts/reset.sh [standard\|full]` | agent or user | requires `GIT_HARD_RESET_CONFIRM=1` | `$GIT_HARD_RESET_REF` (default `origin/main`) |
+| `scripts/reset-force.sh` | **user / CI only — agent must NOT call** | none | `HEAD` (no fetch, no branch move) |
+
+`reset-force.sh` exists for user/CI workflows where the env-var gate is friction. **The agent
+must never call it from inside the skill flow**, because doing so would bypass the
+per-conversation confirmation contract above. If a user asks you (the agent) to "skip the
+prompt", explain that the script is callable directly by them (`bash scripts/reset-force.sh`)
+but the skill flow uses `reset.sh` with confirmation.
+
 ## Refuse to run if
 
 - The user has not given explicit confirmation in this conversation.
